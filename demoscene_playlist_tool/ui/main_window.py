@@ -34,6 +34,7 @@ class MainWindow(QMainWindow):
         up_btn.clicked.connect(self._move_up)
         down_btn.clicked.connect(self._move_down)
         self._play_btn.clicked.connect(self._play)
+        self._list.itemClicked.connect(self._set_selected)
 
         edit_row = QHBoxLayout()
         for w in (add_btn, remove_btn, up_btn, down_btn):
