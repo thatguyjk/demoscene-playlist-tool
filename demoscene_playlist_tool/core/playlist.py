@@ -32,8 +32,17 @@ class Playlist:
     @classmethod
     def load(cls, src: Path) -> "Playlist":
         data = json.loads(src.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            raise ValueError("Invalid playlist format: expected object")
+
+        raw_entries = data.get("entries", [])
+        if not isinstance(raw_entries, list):
+            raise ValueError("Invalid playlist format: 'entries' must be a list")
+
         playlist = cls()
-        for raw in data.get("entries", []):
+        for raw in raw_entries:
+            if not isinstance(raw, str):
+                raise ValueError("Invalid playlist format: each entry must be a string path")
             playlist.add(Path(raw))
         return playlist
 

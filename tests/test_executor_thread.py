@@ -157,3 +157,17 @@ class TestExecutorThread:
         """Test that ExecutorThread inherits from QThread."""
         thread = ExecutorThread([])
         assert isinstance(thread, QThread)
+
+    @patch('demoscene_playlist_tool.ui.executor_thread.Executor')
+    def test_run_emits_finished_when_executor_raises(self, mock_executor_class, app):
+        """Unexpected executor errors should still emit finished and playback_error."""
+        mock_executor = MagicMock()
+        mock_executor.run.side_effect = RuntimeError("boom")
+        mock_executor_class.return_value = mock_executor
+
+        thread = ExecutorThread([Path('/demo1.exe')])
+        with patch.object(thread, 'finished') as mock_finished, patch.object(thread, 'playback_error') as mock_error:
+            thread.run()
+
+        mock_error.emit.assert_called_once()
+        mock_finished.emit.assert_called_once()

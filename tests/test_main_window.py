@@ -90,6 +90,7 @@ class TestMainWindow:
         assert len(main_window._playlist) == 1
         assert main_window._list.count() == 1
         assert main_window._playlist.entries[0].path == Path("/second.exe")
+        assert main_window._selected_entry == 0
         
     def test_remove_entry_no_selection(self, main_window):
         """Test removing entry when nothing is selected."""
@@ -192,6 +193,30 @@ class TestMainWindow:
         assert main_window._list.count() == 2
         assert main_window._playlist.entries[0].path == Path("/demo1.exe")
         assert main_window._playlist.entries[1].path == Path("/demo2.exe")
+        assert main_window._selected_entry == 0
+
+    @patch('demoscene_playlist_tool.ui.main_window.QFileDialog.getOpenFileName')
+    def test_open_playlist_resets_stale_selection(self, mock_dialog, main_window, tmp_path):
+        """Opening a playlist should replace stale selected index state."""
+        playlist_file = tmp_path / "test.json"
+        playlist_file.write_text('{"entries": ["/demo1.exe"]}', encoding="utf-8")
+        mock_dialog.return_value = (str(playlist_file), "")
+
+        main_window._selected_entry = 5
+        main_window._open_playlist()
+
+        assert main_window._selected_entry == 0
+
+    @patch('demoscene_playlist_tool.ui.main_window.QFileDialog.getOpenFileName')
+    def test_open_playlist_invalid_json_shows_error(self, mock_dialog, main_window, tmp_path):
+        """Malformed playlists should not crash the UI and should report an error."""
+        playlist_file = tmp_path / "broken.json"
+        playlist_file.write_text("{bad json", encoding="utf-8")
+        mock_dialog.return_value = (str(playlist_file), "")
+
+        main_window._open_playlist()
+
+        assert "Failed to load playlist" in main_window.statusBar().currentMessage()
         
     @patch('demoscene_playlist_tool.ui.main_window.QFileDialog.getOpenFileName') 
     def test_open_playlist_cancelled(self, mock_dialog, main_window):

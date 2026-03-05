@@ -1,5 +1,4 @@
 from pathlib import Path
-from numbers import Number
 
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QListWidget, QPushButton,
@@ -19,7 +18,7 @@ class MainWindow(QMainWindow):
         self._playlist = Playlist()
         self._thread: ExecutorThread | None = None
 
-        self._selected_entry: None | Number = None
+        self._selected_entry: int | None = None
 
         self._list = QListWidget()
 
@@ -34,7 +33,7 @@ class MainWindow(QMainWindow):
         up_btn.clicked.connect(self._move_up)
         down_btn.clicked.connect(self._move_down)
         self._play_btn.clicked.connect(self._play)
-        self._list.itemClicked.connect(self._set_selected)
+        self._list.currentRowChanged.connect(self._set_selected)
 
         edit_row = QHBoxLayout()
         for w in (add_btn, remove_btn, up_btn, down_btn):
@@ -77,6 +76,14 @@ class MainWindow(QMainWindow):
             self._playlist.remove(row)
             self._list.takeItem(row)
 
+            if self._list.count() == 0:
+                self._list.setCurrentRow(-1)
+            else:
+                self._list.setCurrentRow(min(row, self._list.count() - 1))
+
+            # Ensure internal state is updated even if Qt does not emit row-changed.
+            self._set_selected()
+
     def _move_up(self) -> None:
         row = self._list.currentRow()
         if row > 0:
@@ -93,8 +100,9 @@ class MainWindow(QMainWindow):
             self._list.insertItem(row + 1, item)
             self._list.setCurrentRow(row + 1)
 
-    def _set_selected(self) -> None:
-        self._selected_entry = self._list.currentRow()
+    def _set_selected(self, row: int | None = None) -> None:
+        current_row = self._list.currentRow() if row is None else row
+        self._selected_entry = current_row if current_row >= 0 else None
 
     # --- save / load ---
 
@@ -104,10 +112,21 @@ class MainWindow(QMainWindow):
         )
         if not path:
             return
-        self._playlist = Playlist.load(Path(path))
+        try:
+            self._playlist = Playlist.load(Path(path))
+        except (OSError, ValueError) as error:
+            self._status.showMessage(f"Failed to load playlist: {error}")
+            return
+
         self._list.clear()
         for entry in self._playlist.entries:
             self._list.addItem(str(entry.path))
+
+        if self._list.count() > 0:
+            self._list.setCurrentRow(0)
+        else:
+            self._list.setCurrentRow(-1)
+
         self._status.showMessage(f"Loaded {path}")
 
     def _save_playlist(self) -> None:
@@ -129,12 +148,13 @@ class MainWindow(QMainWindow):
         paths = [e.path for e in self._playlist.entries]
         self._thread = ExecutorThread(paths)
 
-        if self._selected_entry is not None:
+        if self._selected_entry is not None and 0 <= self._selected_entry < len(paths):
             self._thread.set_start_index(self._selected_entry)
-  
+
         self._thread.entry_started.connect(
             lambda p: self._status.showMessage(f"Now playing: {p}")
         )
+        self._thread.playback_error.connect(self._status.showMessage)
         self._thread.finished.connect(self._on_playback_finished)
         self._thread.start()
         self._play_btn.setEnabled(False)

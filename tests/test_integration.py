@@ -113,8 +113,8 @@ class TestRecentChangesIntegration:
         
         main_window._set_selected()
         
-        # Should handle -1 (no selection) appropriately
-        assert main_window._selected_entry == -1
+        # No selection should normalize to None.
+        assert main_window._selected_entry is None
 
 
 class TestPlaylistSaveLoadWithPaths:
@@ -185,9 +185,9 @@ class TestErrorHandling:
             
             main_window._play()
             
-            # Should still work, ExecutorThread should handle invalid index
+            # Should still work and skip invalid start index.
             mock_thread_class.assert_called_once()
-            mock_thread.set_start_index.assert_called_once_with(10)
+            mock_thread.set_start_index.assert_not_called()
             mock_thread.start.assert_called_once()
             
     def test_move_operations_edge_cases(self, main_window):

@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import pytest
+
 from demoscene_playlist_tool.core.playlist import Playlist, PlaylistEntry
 
 
@@ -55,3 +57,19 @@ def test_load_empty_playlist(tmp_path):
     Playlist().save(dest)
     loaded = Playlist.load(dest)
     assert len(loaded) == 0
+
+
+def test_load_rejects_non_object_payload(tmp_path):
+    dest = tmp_path / "invalid.json"
+    dest.write_text("[]", encoding="utf-8")
+
+    with pytest.raises(ValueError):
+        Playlist.load(dest)
+
+
+def test_load_rejects_non_list_entries(tmp_path):
+    dest = tmp_path / "invalid_entries.json"
+    dest.write_text('{"entries": "not-a-list"}', encoding="utf-8")
+
+    with pytest.raises(ValueError):
+        Playlist.load(dest)
