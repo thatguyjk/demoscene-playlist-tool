@@ -6,7 +6,7 @@ from demoscene_playlist_tool.core.executor import Executor
 
 
 class ExecutorThread(QThread):
-    entry_started = pyqtSignal(str)  # emits path string of the current entry
+    entry_started = pyqtSignal(str)
     finished = pyqtSignal()
 
     def __init__(self, paths: list[Path]) -> None:
@@ -17,6 +17,3 @@ class ExecutorThread(QThread):
     def run(self) -> None:
         self._executor.run(self._paths)
         self.finished.emit()
-
-    def stop(self) -> None:
-        self._executor.stop()

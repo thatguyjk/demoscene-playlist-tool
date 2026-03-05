@@ -16,7 +16,6 @@ Built with Python and PyQt6. Windows is the primary target (because that's where
 - ↕️ **Reorder entries** with up/down controls
 - 💾 **Save & load playlists** as plain JSON files — easy to share, easy to edit
 - ▶️ **Play** the entire playlist sequentially, one demo after another
-- ⏹️ **Stop** playback at any time
 - 📡 **Status bar** shows which demo is currently running
 
 ## Getting Started

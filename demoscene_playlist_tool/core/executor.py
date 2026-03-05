@@ -8,16 +8,9 @@ class Executor:
 
     def __init__(self, on_started: Callable[[Path], None] | None = None) -> None:
         self.on_started = on_started
-        self._stop_requested = False
-
-    def stop(self) -> None:
-        self._stop_requested = True
 
     def run(self, paths: list[Path]) -> None:
-        self._stop_requested = False
         for path in paths:
-            if self._stop_requested:
-                break
             if self.on_started:
                 self.on_started(path)
             subprocess.run([str(path)], check=False)

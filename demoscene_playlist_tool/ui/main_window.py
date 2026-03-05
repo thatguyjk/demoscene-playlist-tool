@@ -25,15 +25,12 @@ class MainWindow(QMainWindow):
         up_btn = QPushButton("▲")
         down_btn = QPushButton("▼")
         self._play_btn = QPushButton("▶  Play")
-        self._stop_btn = QPushButton("■  Stop")
-        self._stop_btn.setEnabled(False)
 
         add_btn.clicked.connect(self._add_entry)
         remove_btn.clicked.connect(self._remove_entry)
         up_btn.clicked.connect(self._move_up)
         down_btn.clicked.connect(self._move_down)
         self._play_btn.clicked.connect(self._play)
-        self._stop_btn.clicked.connect(self._stop)
 
         edit_row = QHBoxLayout()
         for w in (add_btn, remove_btn, up_btn, down_btn):
@@ -41,7 +38,6 @@ class MainWindow(QMainWindow):
 
         play_row = QHBoxLayout()
         play_row.addWidget(self._play_btn)
-        play_row.addWidget(self._stop_btn)
 
         layout = QVBoxLayout()
         layout.addWidget(self._list)
@@ -128,13 +124,7 @@ class MainWindow(QMainWindow):
         self._thread.finished.connect(self._on_playback_finished)
         self._thread.start()
         self._play_btn.setEnabled(False)
-        self._stop_btn.setEnabled(True)
-
-    def _stop(self) -> None:
-        if self._thread:
-            self._thread.stop()
 
     def _on_playback_finished(self) -> None:
         self._play_btn.setEnabled(True)
-        self._stop_btn.setEnabled(False)
         self._status.showMessage("Playback finished")
