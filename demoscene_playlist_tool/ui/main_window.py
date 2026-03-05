@@ -1,4 +1,5 @@
 from pathlib import Path
+from numbers import Number
 
 from PyQt6.QtWidgets import (
     QMainWindow, QWidget, QVBoxLayout, QListWidget, QPushButton,
@@ -17,6 +18,8 @@ class MainWindow(QMainWindow):
 
         self._playlist = Playlist()
         self._thread: ExecutorThread | None = None
+
+        self._selected_entry: None | Number = None
 
         self._list = QListWidget()
 
@@ -64,6 +67,9 @@ class MainWindow(QMainWindow):
             self._playlist.add(Path(path))
             self._list.addItem(path)
 
+            if self._selected_entry is None:
+                self._selected_entry = 0
+
     def _remove_entry(self) -> None:
         row = self._list.currentRow()
         if row >= 0:
@@ -85,6 +91,9 @@ class MainWindow(QMainWindow):
             item = self._list.takeItem(row)
             self._list.insertItem(row + 1, item)
             self._list.setCurrentRow(row + 1)
+
+    def _set_selected(self) -> None:
+        self._selected_entry = self._list.currentRow()
 
     # --- save / load ---
 
@@ -118,6 +127,10 @@ class MainWindow(QMainWindow):
             return
         paths = [e.path for e in self._playlist.entries]
         self._thread = ExecutorThread(paths)
+
+        if self._selected_entry is not None:
+            self._thread.set_start_index(self._selected_entry)
+  
         self._thread.entry_started.connect(
             lambda p: self._status.showMessage(f"Now playing: {p}")
         )
